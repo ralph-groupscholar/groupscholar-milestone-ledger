@@ -266,6 +266,48 @@ public sealed class MilestoneRepository
         return results;
     }
 
+    public async Task<IReadOnlyList<CadenceWeekSummary>> GetCadenceWeeksAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        string? cohort,
+        string? status,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        var sql = $@"
+            SELECT date_trunc('week', m.milestone_date)::date AS week_start,
+                   COUNT(*) AS total_milestones,
+                   COALESCE(SUM(CASE WHEN m.risk_flag THEN 1 ELSE 0 END), 0) AS risk_flags
+            FROM {Schema}.milestones m
+            JOIN {Schema}.scholars s ON s.id = m.scholar_id
+            WHERE m.milestone_date BETWEEN @start AND @end
+              AND (@cohort IS NULL OR s.cohort = @cohort)
+              AND (@status IS NULL OR s.status = @status)
+            GROUP BY week_start
+            ORDER BY week_start ASC;";
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("start", startDate);
+        command.Parameters.AddWithValue("end", endDate);
+        command.Parameters.AddWithValue("cohort", (object?)cohort ?? DBNull.Value);
+        command.Parameters.AddWithValue("status", (object?)status ?? DBNull.Value);
+
+        var results = new List<CadenceWeekSummary>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            results.Add(new CadenceWeekSummary(
+                reader.GetFieldValue<DateOnly>(0),
+                reader.GetInt32(1),
+                reader.GetInt32(2)
+            ));
+        }
+
+        return results;
+    }
+
     private static async Task<int> EnsureScholarAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, MilestoneInput input, CancellationToken cancellationToken)
     {
         var select = new NpgsqlCommand($"SELECT id, cohort, status FROM {Schema}.scholars WHERE full_name = @name;", connection, transaction);

@@ -16,3 +16,8 @@
 - Refined the attention queue to support cohort/status filters and as-of snapshots instead of risk windows.
 - Added a CSV exporter alignment fix and updated CLI usage + README examples for the new attention filters.
 - Simplified attention record retrieval SQL and removed the obsolete risk-days path.
+
+## Iteration 118 - 2026-02-08
+- Added cadence reporting with weekly milestone volume and risk flag tracking plus CSV export.
+- Implemented cadence report builder and formatting utilities with unit tests.
+- Updated CLI usage and README examples for the new cadence command.
