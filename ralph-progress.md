@@ -11,3 +11,8 @@
 - Added an attention queue for scholars with recent risk flags or extended inactivity.
 - Implemented attention evaluator logic with CSV export and CLI support.
 - Added unit tests and updated documentation for the new command.
+
+## Iteration 27 - 2026-02-08
+- Refined the attention queue to support cohort/status filters and as-of snapshots instead of risk windows.
+- Added a CSV exporter alignment fix and updated CLI usage + README examples for the new attention filters.
+- Simplified attention record retrieval SQL and removed the obsolete risk-days path.

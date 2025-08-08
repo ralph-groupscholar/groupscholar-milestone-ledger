@@ -6,7 +6,7 @@ Group Scholar Milestone Ledger is a C# CLI that records scholar milestones, flag
 - Record milestone updates with cohort/status context
 - List milestones as a table or CSV export
 - Weekly digest summaries with counts by type, cohort, and scholar status
-- Attention queue for scholars with recent risk flags or stalled activity
+- Attention queue for scholars needing follow-up (inactive or risk flagged)
 - One-command schema initialization and seed data load
 
 ## Tech Stack
@@ -56,8 +56,11 @@ dotnet run --project MilestoneLedger.App list --format csv
 # Weekly digest (last 4 weeks by default)
 dotnet run --project MilestoneLedger.App digest --weeks 4
 
-# Attention queue for risk or inactivity
-dotnet run --project MilestoneLedger.App attention --inactive-days 30 --risk-days 30
+# Attention queue
+dotnet run --project MilestoneLedger.App attention --inactive-days 30 --as-of 2026-02-08
+
+# Attention queue scoped to a cohort and CSV export
+dotnet run --project MilestoneLedger.App attention --cohort "Spring 2025" --format csv
 ```
 
 ## Notes

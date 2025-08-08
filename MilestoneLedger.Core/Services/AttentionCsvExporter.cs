@@ -8,7 +8,7 @@ public sealed class AttentionCsvExporter
     public string Export(IEnumerable<AttentionItem> items)
     {
         var builder = new StringBuilder();
-        builder.AppendLine("Scholar,Cohort,Status,LastMilestoneDate,DaysSinceMilestone,RiskCount,LatestRiskDate,Reasons");
+        builder.AppendLine("Scholar,Cohort,Status,LastMilestoneDate,DaysSinceMilestone,RiskCount,LatestRiskDate,Reason");
 
         foreach (var item in items)
         {
@@ -20,7 +20,7 @@ public sealed class AttentionCsvExporter
                 item.DaysSinceMilestone?.ToString() ?? "",
                 item.RiskCount.ToString(),
                 item.LatestRiskDate?.ToString("yyyy-MM-dd") ?? "",
-                Escape(item.Reasons)
+                Escape(item.Reason)
             ));
         }
 

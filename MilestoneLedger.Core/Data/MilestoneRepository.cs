@@ -266,58 +266,6 @@ public sealed class MilestoneRepository
         return results;
     }
 
-    public async Task<IReadOnlyList<AttentionRecord>> GetAttentionRecordsAsync(
-        DateOnly asOf,
-        int riskDays,
-        CancellationToken cancellationToken = default)
-    {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        var riskSince = asOf.AddDays(-riskDays);
-        var sql = $@"
-            WITH last_milestone AS (
-                SELECT scholar_id, MAX(milestone_date) AS last_date
-                FROM {Schema}.milestones
-                GROUP BY scholar_id
-            ),
-            risk_recent AS (
-                SELECT scholar_id, COUNT(*) AS risk_count, MAX(milestone_date) AS latest_risk_date
-                FROM {Schema}.milestones
-                WHERE risk_flag = TRUE AND milestone_date >= @risk_since
-                GROUP BY scholar_id
-            )
-            SELECT s.full_name,
-                   s.cohort,
-                   s.status,
-                   lm.last_date,
-                   COALESCE(rr.risk_count, 0) AS risk_count,
-                   rr.latest_risk_date
-            FROM {Schema}.scholars s
-            LEFT JOIN last_milestone lm ON s.id = lm.scholar_id
-            LEFT JOIN risk_recent rr ON s.id = rr.scholar_id
-            ORDER BY s.full_name ASC;";
-
-        await using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.AddWithValue("risk_since", riskSince);
-
-        var results = new List<AttentionRecord>();
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            results.Add(new AttentionRecord(
-                reader.GetString(0),
-                reader.IsDBNull(1) ? null : reader.GetString(1),
-                reader.IsDBNull(2) ? null : reader.GetString(2),
-                reader.IsDBNull(3) ? null : reader.GetFieldValue<DateOnly>(3),
-                reader.GetInt32(4),
-                reader.IsDBNull(5) ? null : reader.GetFieldValue<DateOnly>(5)
-            ));
-        }
-
-        return results;
-    }
-
     private static async Task<int> EnsureScholarAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, MilestoneInput input, CancellationToken cancellationToken)
     {
         var select = new NpgsqlCommand($"SELECT id, cohort, status FROM {Schema}.scholars WHERE full_name = @name;", connection, transaction);
